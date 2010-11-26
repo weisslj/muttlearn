@@ -1,0 +1,121 @@
+# muttlearn configuration (full documented version)
+
+# Specify mailboxes to be used for learning mails. It is advisable to include
+# only mailboxes which contain outgoing mails, sent by you, not INBOX or
+# mailing lists. Syntax is similar to mutt's "mailboxes" / "unmailboxes"
+# command. This is overridden by positional parameters to muttlearn.
+unmailboxes *
+mailboxes ~/sent
+
+# Output file for the generated hooks. This is overridden by the -o parameter.
+set output_file = ~/.mutt/automatic-send-hooks
+
+
+# Generate From: header by setting $from and $realname (see $override_from).
+set gen_from = yes
+
+# Generate fcc hook (where message gets saved after sending)
+set gen_fcc = yes
+
+# Generate signature.
+# Can only be true if $sig_dashes is set and $sig_on_top is unset.
+set gen_sig = yes
+
+# If python package guess_language is installed, the most frequently used
+# language can be guessed. Since this is sometimes faulty, this
+# colon-delimited list specifies all 'valid' languages to consider.
+# A single star '*' means all languages.
+set known_languages = *
+
+# Set $locale to the most common locale for the guessed language.
+set gen_locale = yes
+
+# $attribution and $date_format can't be learned (too difficult because of
+# the $index_format / strftime(3) strings), so it is possible to
+# define them for each language, using '_xx' postfix (xx = lang code), e.g.:
+#set attribution_de = "Am %d, schrieb %n:"
+#set date_format_de = "%a %e. %b %Y um %T %Z"
+
+# Activate spell checking in the guessed language. Works only for supported
+# editors (see $editor_type).
+set activate_spell_check = yes
+
+# The maximum age of messages to consider (in days)
+# Negative value: no limit
+set max_age = -1
+
+# Generate greeting message, e.g. "Hey Joe!\n\n".
+# Works only for supported editors (see $editor_type).
+set gen_greeting = yes
+
+# Generate goodbye message, e.g. "\nSee You, Anna".
+# Works only for supported editors (see $editor_type).
+set gen_goodbye = yes
+
+# Generate $send_charset.
+set gen_send_charset = yes
+
+# If gen_crypt=yes, the following variables will be generated per recipient:
+# - $smime_is_default
+# - $crypt_autosign
+# - $crypt_autoencrypt
+# - $pgp_sign_as / $smime_default_key
+set gen_crypt = yes
+
+# PGP / S/MIME encryption and sign keys are also chosen automatically, but not
+# by scanning messages (would not be possible), but by searching the local key
+# store. $pgp_sign_as / $smime_default_key are preferred when there are
+# multiple secret keys for a email address.
+# $crypt_order controlles which search result should be preferred if multiple
+# schemes would be possible.
+set crypt_order = pgp_both:smime_both:smime_sign:pgp_sign
+
+# If set, use my_hdr From: (which overrides $reverse_name etc.)
+set override_from = no
+
+# A python eval expression which determines how much a message increases
+# the learned paramters.
+# All python builtins, the math module and the age of the message can be used.
+set weight_formula = "1.0 / math.sqrt(age + 1)"
+
+# Echo command (for native shell), used for generating signatures.
+# The default value is guessed based on /bin/sh link.
+set echo_cmd = echo
+
+# Editor type (default: autodetected from $editor command)
+# Currently only vim is supported (feel free to write emacs support!)
+# If this is not set to a supported value, generating of
+# greeting and goodbye messages and spell checking commands is not supported.
+set editor_type = vim
+
+# Don't learn any mails which are sent to one self
+# (useful when sending test mails to one self)
+# Uses "alternates" and "unalternates" commands.
+set exclude_mails_to_me = yes
+
+# Only learn mails if they originate from one self
+# Uses "alternates" and "unalternates" commands.
+set only_include_mails_from_me = yes
+
+# Don't generate greeting/goodbye messages for mailing lists.
+set personalize_mailinglists = no
+
+# If this is set, no hooks will be generated for multiple
+# recipients (To: user1, user2, ...)
+set skip_multiple_recipients = no
+
+# Consider the N percent most frequently used greeting messages,
+# and choose randomly
+set greeting_random_percent = 25
+
+# Consider maximally N greeting messages
+set greeting_random_max     = 5
+
+# Consider the N most frequently used goodbye message,
+# and choose randomly
+set goodbye_random_percent = 25
+
+# Consider maximally N greeting messages
+set goodbye_random_max     = 5
+
+# vim: syntax=muttrc
