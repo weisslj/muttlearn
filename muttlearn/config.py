@@ -91,6 +91,7 @@ defaults = {
     'weight_formula':        u'1.0 / math.sqrt(age + 1)',
     'output_file':           u'',
     'override_from':         False,
+    'max_path_length':       256,
 }
 
 variables_used_in_scan = set([

@@ -124,20 +124,20 @@ def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', s
 _gen_template_mapping = {
     'vim': gen_vim_template,
 }
-def gen_template(editor, greeting=u'', goodbye=u'', language=u'', attribution=u'', signature=u'', edit_headers=False):
+def gen_template(editor, greeting=u'', goodbye=u'', language=u'', attribution=u'', signature=u'', edit_headers=False, max_path_length=256):
     f = _gen_template_mapping[editor]
     t = f(greeting, goodbye, language, attribution, signature, edit_headers)
-    if len(t) < 256:
+    if len(t) < max_path_length:
         return t
     t = f(greeting, u'', language, attribution, signature, edit_headers)
-    log.debug('length of editor variable >= 256, skipping goodbye message: %s', goodbye, v=3)
-    if len(t) < 256:
+    log.debug('length of editor variable >= %d, skipping goodbye message: %s', max_path_length, goodbye, v=3)
+    if len(t) < max_path_length:
         return t
     t = f(u'', u'', language, attribution, signature, edit_headers)
-    log.debug('length of editor variable >= 256, skipping greeting message: %s', greeting, v=3)
-    if len(t) < 256:
+    log.debug('length of editor variable >= %d, skipping greeting message: %s', max_path_length, greeting, v=3)
+    if len(t) < max_path_length:
         return t
-    log.debug('length of editor variable STILL >= 256, skipping', v=3)
+    log.debug('length of editor variable STILL >= %d, skipping', max_path_length, v=3)
     return None
 
 def get_max_key(d, percentage=100, limit=1):
@@ -446,7 +446,7 @@ class MuttOutput(object):
                 goodbye = get_max_key(r.goodbye, options['goodbye_random_percent'], options['goodbye_random_max'])
 
             spelllang = language if self.enable_spellcheck else u''
-            template = gen_template(self.editor_type, greeting, goodbye, spelllang, attribution, signature, options['edit_headers'])
+            template = gen_template(self.editor_type, greeting, goodbye, spelllang, attribution, signature, options['edit_headers'], options['max_path_length'])
             if template:
                 val_editor = u'"%s"' % escape_double_quote(template)
             app(u'editor=%s', val_editor)
