@@ -212,7 +212,7 @@ class Muttrc(object):
             self.unset(arg)
     def handle_reset_cmd(self, args):
         for arg in args:
-            self.reset(args)
+            self.reset(arg)
     def handle_toggle_cmd(self, args):
         for arg in args:
             self.toggle(arg)
