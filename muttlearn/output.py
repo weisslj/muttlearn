@@ -366,7 +366,7 @@ class MuttOutput(object):
         to_emails = r.emails
         from_email = get_max_key(r.from_email)
 
-        to_emails_pattern = u' '.join([u'~t "^%s$"' % re.escape(e) for e in to_emails])
+        to_emails_pattern = u' '.join([u'~t "^%s$"' % re.escape(e) for e in sorted(to_emails)])
         if len(to_emails) == 1:
             to_emails_pattern = u'^' + to_emails_pattern
 
@@ -462,7 +462,7 @@ class MuttOutput(object):
             lines.append(u"fcc-hook '%s' '%s'" % (to_emails_pattern, get_max_key(r.mbox_path)))
 
         if lines:
-            lines.insert(0, u'# %s' % ', '.join(to_emails))
+            lines.insert(0, u'# %s' % ', '.join(sorted(to_emails)))
             lines.extend(2*[u''])
 
         return lines

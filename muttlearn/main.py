@@ -239,7 +239,9 @@ def main(argv=None):
 
     mutt_out = output.MuttOutput(outfile, config.options())
     mutt_out.output_header()
-    for addr in recipients:
+    # result is sorted, so that larger address groups are matched later.
+    # Also comparison of output files is easier when debugging.
+    for addr in sorted(recipients, key=lambda x:(len(x),x)):
         mutt_out.output_recipient(recipients[addr])
 
     if options.output != '-':
