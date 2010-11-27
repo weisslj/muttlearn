@@ -304,7 +304,7 @@ class Mailbox(object):
     def __init__(self, path, type='auto'):
         if not os.path.exists(path):
             log.error('mailbox "%s" does not exist', path)
-        self.path = path
+        self.path = os.path.realpath(path)
         if type == 'auto':
             type = self.recognize()
         if type == 'mbox':
