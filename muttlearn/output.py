@@ -54,9 +54,6 @@ script_noeditheaders = vimscript_tidy('''
 ''')
 
 script_editheaders = vimscript_tidy('''
-    " save current cursor position
-    let c=line(".")
-
     " search empty line after the headers
     call cursor(1,0)
     let d=search("^$")
@@ -78,8 +75,6 @@ script_editheaders = vimscript_tidy('''
 
         " start insert mode
         star
-    el
-        call cursor(c,0)
     en
 ''')
 
