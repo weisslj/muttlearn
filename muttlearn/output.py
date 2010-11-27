@@ -71,9 +71,6 @@ script_editheaders = vimscript_tidy('''
         " insert newline to seperate from it
         if f!=""
             call append(d+%(template_lines)d,"")
-        el
-            call cursor(d+%(after_template)d,0)
-            d
         en
 
         " move cursor below greeting
