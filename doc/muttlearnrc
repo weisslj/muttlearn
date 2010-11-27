@@ -80,13 +80,13 @@ set weight_formula = "1.0 / math.sqrt(age + 1)"
 
 # Echo command (for native shell), used for generating signatures.
 # The default value is guessed based on /bin/sh link.
-set echo_cmd = echo
+#set echo_cmd = echo
 
 # Editor type (default: autodetected from $editor command)
 # Currently only vim is supported (feel free to write emacs support!)
 # If this is not set to a supported value, generating of
 # greeting and goodbye messages and spell checking commands is not supported.
-set editor_type = vim
+#set editor_type = vim
 
 # Don't learn any mails which are sent to one self
 # (useful when sending test mails to one self)
