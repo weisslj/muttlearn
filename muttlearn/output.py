@@ -87,7 +87,7 @@ def vimscript_escape(s):
 
 def list2vim(lst):
     """Convert python list to a string containing a vim-script list."""
-    return u'[%s]' % ', '.join([u'"%s"' % x for x in lst])
+    return u'[%s]' % ','.join([u'"%s"' % x for x in lst])
 
 def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', signature=u'', edit_headers=False):
     script = u'star'
