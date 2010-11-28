@@ -20,8 +20,8 @@ import zlib
 import mailbox
 import email
 import email.utils
+import email.header
 import mmap
-from email.header import make_header, decode_header
 
 import config
 import log
@@ -39,14 +39,19 @@ def prepare():
     except ImportError, e:
         log.debug('failed to import guess_language, language guessing disabled: %s', e)
 
-def decodeHeader(h):
+def decode_header(h, encodings_used=None):
     """Return unicode representation of header body, e.g.:
     '=?utf-8?b?ZMOpasOgIHZ1?=' -> u'déjà vu'
 
     throws UnicodeDecodeError
 
     """
-    return unicode(make_header(decode_header(h)))
+    lst = email.header.decode_header(h)
+    if encodings_used is not None:
+        for x in lst:
+            if x[1]:
+                encodings_used.add(x[1])
+    return unicode(email.header.make_header(lst))
 
 class MessageBody(object):
     _re_control_message = re.compile(r'^-----.*-----$')
@@ -179,19 +184,20 @@ class MailboxMessage(Message):
         self.msg = msg
         msgid = self.msgid or self.mbox_key
 
+        self.encodings_used = set()
         try:
-            self.from_hdr = decodeHeader(msg['From'])
+            self.from_hdr = decode_header(msg['From'], self.encodings_used)
         except UnicodeDecodeError, e:
             log.debug('can not decode From: header of %s: %s', msgid, str(e))
             return False
 
         try:
-            to_hdr = decodeHeader(msg['To'])
+            to_hdr = decode_header(msg['To'], self.encodings_used)
         except UnicodeDecodeError, e:
             log.debug('can not decode To: header of %s: %s', msgid, str(e))
             return False
 
-        date_str = decodeHeader(msg['Date'])
+        date_str = decode_header(msg['Date'])
 
         from_decoded = email.utils.getaddresses([self.from_hdr])
         if not from_decoded or not from_decoded[0][1]:
@@ -243,6 +249,9 @@ class MailboxMessage(Message):
                     self.charset = charset
                     unicode_error = None
                     break
+        # if body is ascii, look at header for future send_charset
+        if self.charset == 'us-ascii' and self.encodings_used:
+            self.charset = self.encodings_used.pop()
 
         # if unicode conversion failed, skip body detection altogether
         # nobody benefits from distorted strings
