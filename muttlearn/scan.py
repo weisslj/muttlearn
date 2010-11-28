@@ -159,6 +159,7 @@ class MailboxMessage(Message):
     _re_goodbye = re.compile(r'\n\n((?:.{2,40}\n.{2,40})|(?:.{2,40}))$')
     _re_quote = re.compile(r'^([ \t]*[|>:}#])+')
     _re_smileys = re.compile(r'(>From )|(:[-^]?[][)(><}{|/DP])')
+    _assumed_charsets = ['us-ascii', 'iso-8859-1', 'utf-8']
 
     def __init__(self, path, mbox, mbox_key):
         super(MailboxMessage, self).__init__()
@@ -214,18 +215,28 @@ class MailboxMessage(Message):
         return True
 
     def parse_body(self):
-        if self.msg.is_multipart():
-            self.msg = self.msg.get_payload(0)
-        self.charset = self.msg.get_content_charset('')
         msgid = self.msgid or self.mbox_key
+
+        if self.msg.is_multipart():
+            for part in self.msg.walk():
+                if part.get_content_type() == 'text/plain':
+                    self.msg = part
+                    break
+            else:
+                log.debug('%s message contains no text/plain subpart: %s', self.msg.get_content_type(), msgid, v=2)
+                return False
+        if self.msg.get_content_type() != 'text/plain':
+            log.debug('content type %s not supported: %s', self.msg.get_content_type(), msgid, v=2)
+            return False
+
+        self.charset = self.msg.get_content_charset('')
 
         unicode_error = None
         if self.charset:
             try: self.body = unicode(self.msg.get_payload(decode=True), self.charset)
             except UnicodeDecodeError, e: unicode_error = e
-        elif config.get('assumed_charset'):
-            assumed_charsets = config.get('assumed_charset').split(':')
-            for charset in assumed_charsets:
+        else:
+            for charset in self._assumed_charsets:
                 try: self.body = unicode(self.msg.get_payload(decode=True), charset)
                 except UnicodeDecodeError, e: unicode_error = e
                 else:
@@ -240,7 +251,7 @@ class MailboxMessage(Message):
             return False
 
         if not self.body:
-            log.debug('empty body: %s', msgid, v=2)
+            log.debug('empty body: %s', msgid, v=3)
             return False
 
         # convert dos line feeds to unix line feeds
@@ -385,3 +396,5 @@ def init(options):
         Recipient.weight_formula = weight_formula
     except (SyntaxError, TypeError), e:
         log.error('weight_formula is invalid: %s', e)
+    if options['assumed_charset']:
+        Message._assumed_charsets[:] = options['assumed_charset'].split(':')
