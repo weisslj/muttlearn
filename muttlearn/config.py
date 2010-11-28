@@ -97,17 +97,15 @@ defaults = {
 }
 
 variables_used_in_scan = set([
-    'max_age',
+    'assumed_charset',
     'quote_regexp',
     'smileys',
-    'exclude_mails_to_me',
-    'only_include_mails_from_me',
+    'greeting_regexp',
+    'goodbye_regexp',
     'personalize_mailinglists',
 ])
 
 members_used_in_scan = set([
-    'alternates',
-    'unalternates',
 ])
 
 def default_editor_type(editor):
@@ -163,9 +161,11 @@ def db_needs_rebuilding():
         return True
     vardict = dict([(k, rc.variables[k]) for k in variables_used_in_scan])
     if d['variables'] != vardict:
+        log.debug('some important variables changed, need to rebuild cache')
         return True
     for k in members_used_in_scan:
         if d[k] != getattr(rc, k):
+            log.debug('some important commands changed, need to rebuild cache')
             return True
     return False
 
