@@ -166,35 +166,39 @@ class MailboxMessage(Message):
 
         buf = mbox.get_string(mbox_key)
         self.adler32 = zlib.adler32(buf)
-        self.msgid = self._re_msgid.search(buf).group(1)
+        msgid_match = self._re_msgid.search(buf)
+        self.msgid = msgid_match.group(1) if msgid_match else ''
+        if not self.msgid:
+            log.debug('message has not Message-ID, cannot cache: %s -> %s', path, mbox_key)
 
     def parse_header(self):
         msg = self.mbox.get_message(self.mbox_key)
         self.msg = msg
+        msgid = self.msgid or self.mbox_key
 
         try:
             self.from_hdr = decodeHeader(msg['From'])
         except UnicodeDecodeError, e:
-            log.debug('can not decode From: header of %s: %s', self.msgid, str(e))
+            log.debug('can not decode From: header of %s: %s', msgid, str(e))
             return False
 
         try:
             to_hdr = decodeHeader(msg['To'])
         except UnicodeDecodeError, e:
-            log.debug('can not decode To: header of %s: %s', self.msgid, str(e))
+            log.debug('can not decode To: header of %s: %s', msgid, str(e))
             return False
 
         date_str = decodeHeader(msg['Date'])
 
         from_decoded = email.utils.getaddresses([self.from_hdr])
         if not from_decoded or not from_decoded[0][1]:
-            log.debug('mail has no sender: %s', self.msgid)
+            log.debug('mail has no sender: %s', msgid)
             return False
         self.from_email = from_decoded[0][1].lower()
         self.from_realname = from_decoded[0][0]
         self.to_emails = set(e.lower() for n, e in email.utils.getaddresses([to_hdr]))
         if not self.to_emails:
-            log.debug('mail has no recipient: %s', self.msgid)
+            log.debug('mail has no recipient: %s', msgid)
             return False
         self.to_emails_str = ' '.join(sorted(self.to_emails))
 
@@ -227,11 +231,11 @@ class MailboxMessage(Message):
         # if unicode conversion failed, skip body detection altogether
         # nobody benefits from distorted strings
         if unicode_error is not None:
-            log.debug('can not decode body of %s: %s', self.msgid, unicode_error)
+            log.debug('can not decode body of %s: %s', msgid, unicode_error)
             return False
 
         if not self.body:
-            log.debug('empty body: %s', self.msgid, v=2)
+            log.debug('empty body: %s', msgid, v=2)
             return False
 
         # convert dos line feeds to unix line feeds
