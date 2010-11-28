@@ -151,7 +151,7 @@ class Message(object):
 
 
 class MailboxMessage(Message):
-    _re_msgid = re.compile(r'^Message-ID:[ \t]*(.*?)\n(?:[^ \t]|\r?\n)', re.M | re.I | re.S)
+    _re_msgid = re.compile(r'^Message-ID:[ \t]*(.*?)\n[^ \t]', re.M | re.I | re.S)
     _re_signature = re.compile(r'\n-- \n(.*)$', re.DOTALL)
     _re_greeting = re.compile(r'^(.{2,40})\n\n')
     _re_goodbye = re.compile(r'\n\n((?:.{2,40}\n.{2,40})|(?:.{2,40}))$')
