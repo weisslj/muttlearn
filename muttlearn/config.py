@@ -141,6 +141,12 @@ def init(conf_path=None, mutt_conf_path=None, read_muttrc=False):
     options['output_file'] = rc.expand_path(options['output_file'])
     if options['gen_sig'] and (not options['sig_dashes'] or options['sig_on_top']):
         log.error('config error: if gen_sig=yes, these settings are required: sig_dashes=yes and sig_on_top=no')
+    if options['exclude_mails_to_me'] and not rc.alternates:
+        log.warn('config conflict: exclude_mails_to_me is set, but no "alternates" are specified!')
+        options['exclude_mails_to_me'] = False
+    if options['only_include_mails_from_me'] and not rc.alternates:
+        log.warn('config conflict: only_include_mails_from_me is set, but no "alternates" are specified!')
+        options['only_include_mails_from_me'] = False
 
 cache_conf_path = os.path.expanduser('~/.muttlearn/cache_config')
 cache_version = 0
