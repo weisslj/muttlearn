@@ -240,11 +240,11 @@ class MailboxMessage(Message):
         unicode_error = None
         if self.charset:
             try: self.body = unicode(self.msg.get_payload(decode=True), self.charset)
-            except UnicodeDecodeError, e: unicode_error = e
+            except (UnicodeDecodeError, LookupError), e: unicode_error = e
         else:
             for charset in self._assumed_charsets:
                 try: self.body = unicode(self.msg.get_payload(decode=True), charset)
-                except UnicodeDecodeError, e: unicode_error = e
+                except (UnicodeDecodeError, LookupError), e: unicode_error = e
                 else:
                     self.charset = charset
                     unicode_error = None
