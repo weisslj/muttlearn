@@ -268,7 +268,8 @@ set gen_crypt = yes
 def get_mailboxes():
     # mailbox names must be normal strings, otherwise python's mailbox
     # module throws errors
-    return [x.encode('utf-8') for x in rc.mailboxes]
+    enc = locale.getpreferredencoding()
+    return [x.encode(enc) for x in rc.mailboxes]
 
 def dump():
     for k in mutt_defaults:
