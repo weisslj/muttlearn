@@ -213,6 +213,7 @@ class MailboxMessage(Message):
         if self.msg.is_multipart():
             self.msg = self.msg.get_payload(0)
         self.charset = self.msg.get_content_charset('')
+        msgid = self.msgid or self.mbox_key
 
         unicode_error = None
         if self.charset:
