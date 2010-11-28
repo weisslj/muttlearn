@@ -118,26 +118,25 @@ def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', s
 
     if language:
         script += u'|set spell spelllang=%s' % language
-    editor = u'$my_default_editor -c"%s"' % vimscript_escape(script.strip())
-    return editor
+    return u'-c"%s"' % vimscript_escape(script.strip())
 
 _gen_template_mapping = {
     'vim': gen_vim_template,
 }
-def gen_template(editor, greeting=u'', goodbye=u'', language=u'', attribution=u'', signature=u'', edit_headers=False, max_path_length=256):
-    f = _gen_template_mapping[editor]
-    t = f(greeting, goodbye, language, attribution, signature, edit_headers)
-    if len(t) < max_path_length:
-        return t
-    t = f(greeting, u'', language, attribution, signature, edit_headers)
-    log.debug('length of editor variable >= %d, skipping goodbye message: %s', max_path_length, goodbye, v=3)
-    if len(t) < max_path_length:
-        return t
-    t = f(u'', u'', language, attribution, signature, edit_headers)
-    log.debug('length of editor variable >= %d, skipping greeting message: %s', max_path_length, greeting, v=3)
-    if len(t) < max_path_length:
-        return t
-    log.debug('length of editor variable STILL >= %d, skipping', max_path_length, v=3)
+def gen_template(editor_type, greeting=u'', goodbye=u'', language=u'', attribution=u'', signature=u'', edit_headers=False, max_length=256):
+    f = _gen_template_mapping[editor_type]
+    editor_args = f(greeting, goodbye, language, attribution, signature, edit_headers)
+    if len(editor_args) < max_length:
+        return editor_args
+    log.debug('length of editor variable >= %d, skipping goodbye message: %s', max_length, goodbye, v=3)
+    editor_args = f(greeting, u'', language, attribution, signature, edit_headers)
+    if len(editor_args) < max_length:
+        return editor_args
+    log.debug('length of editor variable >= %d, skipping greeting message: %s', max_length, greeting, v=3)
+    editor_args = f(u'', u'', language, attribution, signature, edit_headers)
+    if len(editor_args) < max_length:
+        return editor_args
+    log.debug('length of editor variable STILL >= %d, skipping', max_length, v=3)
     return None
 
 def get_max_key(d, percentage=100, limit=1):
@@ -446,9 +445,16 @@ class MuttOutput(object):
                 goodbye = get_max_key(r.goodbye, options['goodbye_random_percent'], options['goodbye_random_max'])
 
             spelllang = language if self.enable_spellcheck else u''
-            template = gen_template(self.editor_type, greeting, goodbye, spelllang, attribution, signature, options['edit_headers'], options['max_path_length'])
+            template = gen_template(self.editor_type,
+                                    greeting=greeting,
+                                    goodbye=goodbye,
+                                    language=spelllang,
+                                    attribution=attribution,
+                                    signature=signature,
+                                    edit_headers=options['edit_headers'],
+                                    max_length=options['max_path_length']-len(options['editor'])-len(u' ""\0'))
             if template:
-                val_editor = u'"%s"' % escape_double_quote(template)
+                val_editor = u'"$my_default_editor %s"' % escape_double_quote(template)
             app(u'editor=%s', val_editor)
 
         if send_hook_sets:
