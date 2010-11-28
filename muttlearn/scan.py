@@ -395,12 +395,12 @@ class Mailbox(object):
 def init(options):
     try:
         re_quote = re.compile(options['quote_regexp'])
-        Message._re_quote = re_quote
+        MailboxMessage._re_quote = re_quote
     except re.error, e:
         log.error('quote_regexp is invalid regexp: %s', e)
     try:
         re_smileys = re.compile(options['smileys'])
-        Message._re_smileys = re_smileys
+        MailboxMessage._re_smileys = re_smileys
     except re.error, e:
         log.error('smileys is invalid regexp: %s', e)
     try:
@@ -409,4 +409,4 @@ def init(options):
     except (SyntaxError, TypeError), e:
         log.error('weight_formula is invalid: %s', e)
     if options['assumed_charset']:
-        Message._assumed_charsets[:] = options['assumed_charset'].split(':')
+        MailboxMessage._assumed_charsets[:] = options['assumed_charset'].split(':')
