@@ -117,7 +117,7 @@ def default_editor_type(editor):
 
 config_path = os.path.expanduser('~/.muttlearnrc')
 
-def init(conf_path=None, mutt_conf_path=None, read_muttrc=False):
+def init(conf_path=None, mutt_conf_path=None, read_muttrc=True):
     global rc, config_path
     rc = muttrc.Muttrc(defaults=mutt_defaults)
     if read_muttrc:
