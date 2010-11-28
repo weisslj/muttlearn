@@ -60,6 +60,8 @@ def gen_recipients_from_cache(options, progress=False):
             continue
         if options['only_include_mails_from_me'] and not config.is_this_me(msg.from_email):
             continue
+        if max_age >= 0 and msg.age > max_age:
+            continue
         if msg.to_emails_str not in recipients:
             r = scan.Recipient(msg.to_emails, msg)
             recipients[msg.to_emails_str] = r
@@ -104,6 +106,8 @@ def gen_recipients(mailboxes, options, use_cache=True, clean_cache=False, progre
             if options['exclude_mails_to_me'] and filter_any(config.is_this_me, msg.to_emails):
                 continue
             if options['only_include_mails_from_me'] and not config.is_this_me(msg.from_email):
+                continue
+            if max_age >= 0 and msg.age > max_age:
                 continue
             if not d:
                 msg.parse_body()

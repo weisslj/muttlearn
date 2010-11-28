@@ -102,8 +102,8 @@ class Message(object):
         self.from_realname = u''
         self.to_emails = set()
         self.to_emails_str = u''
-        self.time = 0
-        self.age = 0
+        self.time = -1
+        self.age = -1
         self.charset = ''
         self.signature = u''
         self.greeting = u''
@@ -113,14 +113,17 @@ class Message(object):
 
         self.mbox_path = u''
 
+    def set_time(self, t):
+        self.time = t
+        self.age = int((time.time() - self.time) / 3600 / 24)
+
     def from_dict(self, d):
         self.from_hdr = d['from_hdr']
         self.from_email = d['from_email']
         self.from_realname = d['from_realname']
         self.to_emails = d['to_emails']
         self.to_emails_str = d['to_emails_str']
-        self.time = d['time']
-        self.age = d['age']
+        self.set_time(d['time'])
         self.charset = d['charset']
         self.signature = d['signature']
         self.greeting = d['greeting']
@@ -142,7 +145,6 @@ class Message(object):
         d['to_emails'] = self.to_emails
         d['to_emails_str'] = self.to_emails_str
         d['time'] = self.time
-        d['age'] = self.age
         d['charset'] = self.charset
         d['signature'] = self.signature
         d['greeting'] = self.greeting
@@ -202,10 +204,12 @@ class MailboxMessage(Message):
             return False
         self.to_emails_str = ' '.join(sorted(self.to_emails))
 
+        msg_time = time.time()
         if date_str:
             date_tuple = email.utils.parsedate_tz(date_str)
-            self.time = email.utils.mktime_tz(date_tuple) if date_tuple else 0
-        self.age = int((time.time() - self.time) / 3600 / 24)
+            if date_tuple:
+                msg_time = email.utils.mktime_tz(date_tuple)
+        self.set_time(msg_time)
 
         return True
 
