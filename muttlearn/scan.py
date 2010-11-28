@@ -151,7 +151,7 @@ class Message(object):
 
 
 class MailboxMessage(Message):
-    _re_msgid = re.compile(r'^Message-ID:[ \t]*(.*)$', re.M | re.I)
+    _re_msgid = re.compile(r'^Message-ID:[ \t]*(.*?)\n(?:[^ \t]|\r?\n)', re.M | re.I | re.S)
     _re_signature = re.compile(r'\n-- \n(.*)$', re.DOTALL)
     _re_greeting = re.compile(r'^(.{2,40})\n\n')
     _re_goodbye = re.compile(r'\n\n((?:.{2,40}\n.{2,40})|(?:.{2,40}))$')
@@ -167,9 +167,9 @@ class MailboxMessage(Message):
         buf = mbox.get_string(mbox_key)
         self.adler32 = zlib.adler32(buf)
         msgid_match = self._re_msgid.search(buf)
-        self.msgid = msgid_match.group(1) if msgid_match else ''
+        self.msgid = msgid_match.group(1).strip() if msgid_match else ''
         if not self.msgid:
-            log.debug('message has not Message-ID, cannot cache: %s -> %s', path, mbox_key)
+            log.debug('message has no Message-ID, cannot cache: %s -> %s', path, mbox_key)
 
     def parse_header(self):
         msg = self.mbox.get_message(self.mbox_key)
