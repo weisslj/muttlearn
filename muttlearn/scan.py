@@ -161,7 +161,7 @@ class MailboxMessage(Message):
     _re_msgid = re.compile(r'^Message-ID:[ \t]*(.*?)\n[^ \t]', re.M | re.I | re.S)
     _re_signature = re.compile(r'\n-- \n(.*)$', re.DOTALL)
     _re_greeting = re.compile(r'^(.{2,40})\n\n')
-    _re_goodbye = re.compile(r'\n\n((?:.{2,40}\n.{2,40})|(?:.{2,40}))$')
+    _re_goodbye = re.compile(r'\n\n((?:.{2,40}\n.{2,40})|(?:.{2,40}\n\n.{2,40})|(?:.{2,40}))$')
     _re_quote = re.compile(r'^([ \t]*[|>:}#])+')
     _re_smileys = re.compile(r'(>From )|(:[-^]?[][)(><}{|/DP])')
     _assumed_charsets = ['us-ascii', 'iso-8859-1', 'utf-8']
@@ -279,7 +279,7 @@ class MailboxMessage(Message):
         match = self._re_greeting.search(self.body)
         self.greeting = match.group(1) if match else u''
         if self.greeting:
-            body = self._re_greeting.sub('', self.body, 1).lstrip('\n')
+            body = self._re_greeting.sub(u'', self.body, 1).lstrip('\n')
             mb = MessageBody(body, self._re_quote, self._re_smileys)
             words_to_guess = u' '.join(re.split(r'\W+', u'%s %s' % (mb.unquoted, mb.quoted))[:20])
             guessed_language = guessLanguage(words_to_guess)
@@ -290,7 +290,10 @@ class MailboxMessage(Message):
             match = self._re_goodbye.search(mb.top.rstrip('\n'))
             if not match:
                 match = self._re_goodbye.search(mb.bottom.rstrip('\n'))
-            self.goodbye = match.group(1) if match else u''
+            if match:
+                body = self._re_goodbye.sub(u'', body, 1).strip('\n')
+                if body:
+                    self.goodbye = match.group(1)
 
         return True
 
