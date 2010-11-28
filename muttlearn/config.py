@@ -92,6 +92,8 @@ defaults = {
     'output_file':           u'',
     'override_from':         False,
     'max_path_length':       256,
+    'greeting_regexp':       ur'^(.{2,40})\n\n',
+    'goodbye_regexp':        ur'\n\n((?:.{2,40}\n.{2,40})|(?:.{2,40}\n\n.{2,40})|(?:.{2,40}))$',
 }
 
 variables_used_in_scan = set([

@@ -404,6 +404,16 @@ def init(options):
     except re.error, e:
         log.error('smileys is invalid regexp: %s', e)
     try:
+        re_greeting = re.compile(options['greeting_regexp'])
+        MailboxMessage._re_greeting = re_greeting
+    except re.error, e:
+        log.error('greeting_regexp is invalid regexp: %s', e)
+    try:
+        re_goodbye = re.compile(options['goodbye_regexp'])
+        MailboxMessage._re_goodbye = re_goodbye
+    except re.error, e:
+        log.error('goodbye_regexp is invalid regexp: %s', e)
+    try:
         weight_formula = compile(options['weight_formula'], '<string>', 'eval')
         Recipient.weight_formula = weight_formula
     except (SyntaxError, TypeError), e:
