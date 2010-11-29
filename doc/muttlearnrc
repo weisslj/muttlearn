@@ -105,7 +105,7 @@ set personalize_mailinglists = no
 set skip_multiple_recipients = no
 
 # Regular expression for recognition of greeting message.
-set greeting_regexp = "^(.{2,40})\n\n"
+set greeting_regexp = '^(.{2,40})\n\n'
 
 # Consider the N percent most frequently used greeting messages,
 # and choose randomly
@@ -115,7 +115,7 @@ set greeting_random_percent = 25
 set greeting_random_max     = 5
 
 # Regular expression for recognition of goodbye message.
-set goodbye_regexp = "\n\n((?:.{2,40}\n.{2,40})|(?:.{2,40}\n\n.{2,40})|(?:.{2,40}))$"
+set goodbye_regexp = '\n\n((?:.{2,40}\n.{2,40})|(?:.{2,40}\n\n.{2,40})|(?:.{2,40}))$'
 
 # Consider the N most frequently used goodbye message,
 # and choose randomly
