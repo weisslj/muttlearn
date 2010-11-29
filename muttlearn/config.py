@@ -207,7 +207,7 @@ def save_default():
         os.makedirs(base)
     f = open(config_path, 'wb')
     f.write(r'''\
-# muttlearn configuration
+# muttlearn config (see muttlearnrc in doc/ for full documented example)
 
 # Specify mailboxes to be used for learning mails. It is advisable to include
 # only mailboxes which contain outgoing mails, sent by you, not INBOX or
