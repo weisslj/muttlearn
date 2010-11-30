@@ -76,7 +76,7 @@ if f==""||f=~"%(attribution_last_char)s$"
             else:
                 script += '''
     " append goodbye message at the end
-    call append("$", %(goodbye)s)
+    call append("$",%(goodbye)s)
 '''
 
             if use_placeholder:
