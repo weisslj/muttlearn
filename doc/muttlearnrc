@@ -124,6 +124,10 @@ set goodbye_random_percent = 25
 # Consider maximally N greeting messages
 set goodbye_random_max     = 5
 
+# Insert this string after greeting/goodbye message, useful
+# for jumping in the document!
+#set template_insert_placeholder = '<++>'
+
 # Maximum path length (including ending '\0'). You need to patch mutt
 # to specify anything greater than 256. This is very useful, because
 # otherwise $editor variable is limited to 255 characters.

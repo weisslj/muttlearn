@@ -115,6 +115,7 @@ class Message(object):
         self.goodbye = u''
         self.language = u''
         self.body = u''
+        self.posting_style = u'tofu'
 
         self.mbox_path = u''
 
@@ -134,6 +135,7 @@ class Message(object):
         self.greeting = d['greeting']
         self.goodbye = d['goodbye']
         self.language = d['language']
+        self.posting_style = d['posting_style']
     def from_dict_only(self, d):
         self.from_dict(d)
         self.mbox_path = d['mbox_path']
@@ -155,6 +157,7 @@ class Message(object):
         d['greeting'] = self.greeting
         d['goodbye'] = self.goodbye
         d['language'] = self.language
+        d['posting_style'] = self.posting_style
 
 
 class MailboxMessage(Message):
@@ -273,27 +276,36 @@ class MailboxMessage(Message):
         if self.signature:
             self.body = self._re_signature.sub(u'', self.body, 1).rstrip('\n')
 
-        if not config.get('personalize_mailinglists') and filter_any(config.is_mailinglist, self.to_emails):
-            return False
-
         match = self._re_greeting.search(self.body)
         self.greeting = match.group(1) if match else u''
-        if self.greeting:
-            body = self._re_greeting.sub(u'', self.body, 1).lstrip('\n')
-            mb = MessageBody(body, self._re_quote, self._re_smileys)
-            words_to_guess = u' '.join(re.split(r'\W+', u'%s %s' % (mb.unquoted, mb.quoted))[:20])
-            guessed_language = guessLanguage(words_to_guess)
-            self.language = guessed_language if guessed_language != 'UNKNOWN' else ''
-            if not mb.unquoted:
-                self.greeting = u''
 
-            match = self._re_goodbye.search(mb.top.rstrip('\n'))
-            if not match:
-                match = self._re_goodbye.search(mb.bottom.rstrip('\n'))
-            if match:
-                body = self._re_goodbye.sub(u'', body, 1).strip('\n')
-                if body:
-                    self.goodbye = match.group(1)
+        body = self.body
+        if self.greeting:
+            body = self._re_greeting.sub(u'', body, 1).lstrip('\n')
+
+        mb = MessageBody(body, self._re_quote, self._re_smileys)
+
+        if len(mb.interleaved) + len(mb.bottom) > len(mb.top):
+            self.posting_style = u'inline'
+
+        words_to_guess = u' '.join(re.split(r'\W+', u'%s %s' % (mb.unquoted, mb.quoted))[:20])
+        guessed_language = guessLanguage(words_to_guess)
+        self.language = guessed_language if guessed_language != 'UNKNOWN' else ''
+
+        if not config.get('personalize_mailinglists') and filter_any(config.is_mailinglist, self.to_emails):
+            self.greeting = u''
+            return True
+
+        if not mb.unquoted:
+            self.greeting = u''
+
+        match = self._re_goodbye.search(mb.top.rstrip('\n'))
+        if not match:
+            match = self._re_goodbye.search(mb.bottom.rstrip('\n'))
+        if match:
+            body = self._re_goodbye.sub(u'', body, 1).strip('\n')
+            if body:
+                self.goodbye = match.group(1)
 
         return True
 
@@ -309,6 +321,7 @@ class Recipient(object):
         'charset',
         'language',
         'mbox_path',
+        'posting_style',
     ]
     weight_formula = compile('1.0 / math.sqrt(age + 1)', '<string>', 'eval')
     def __init__(self, emails, msg=None):

@@ -17,68 +17,7 @@ import math
 import crypto
 import log
 from muttrc import expand_signature
-
-def vimscript_tidy(script):
-    """Return a condensed version of script
-    (comments and superfluous whitespace removed, newlines replaced
-    with '|')
-
-    """
-    lst = script.strip().split('\n')
-    lst[:] = [l.strip() for l in lst]
-    lst[:] = [l for l in lst if l and not l.startswith('"')]
-    return '|'.join(lst)
-
-
-script_noeditheaders = vimscript_tidy('''
-    let f=getline(1)
-
-    " only insert greeting/goodbye if not already there!
-    if f==""||f=~"%(attribution_last_char)s$"
-        call append(0,%(template)s)
-
-        " if first line was not empty, there is quoted text
-        " insert newline to seperate from it
-        if f!=""
-            call append(%(template_lines)d,"")
-        el
-            %(after_template)dd
-        en
-
-        " move cursor below greeting
-        call cursor(%(greeting_lines)d,1)
-
-        " start insert mode
-        star
-    en
-''')
-
-script_editheaders = vimscript_tidy('''
-    " search empty line after the headers
-    call cursor(1,0)
-    let d=search("^$")
-
-    let f=getline(min([line("$"),d+1]))
-
-    " only insert greeting/goodbye if not already there!
-    if f==""||f=~"%(attribution_last_char)s$"
-        call append(d,%(template)s)
-
-        " if first line was not empty, there is quoted text
-        " insert newline to seperate from it
-        if f!=""
-            call append(d+%(template_lines)d,"")
-        en
-
-        " move cursor below greeting
-        call cursor(d+%(greeting_lines)d,1)
-
-        " start insert mode
-        star
-    en
-''')
-
-
+from vimscript import vimscripts
 
 def vimscript_escape(s):
     s = s.replace(u'\n', u'\\n')
@@ -89,32 +28,41 @@ def list2vim(lst):
     """Convert python list to a string containing a vim-script list."""
     return u'[%s]' % ','.join([u'"%s"' % x for x in lst])
 
-def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', signature=u'', edit_headers=False):
+def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', signature=u'',
+                     posting_style=u'tofu', edit_headers=False, placeholder=u''):
     script = u'star'
     template = []
 
     if greeting or goodbye:
         if greeting:
-            greeting = greeting.split(u'\n')+2*[u'']
+            if placeholder:
+                greeting += placeholder
+            greeting = greeting.split(u'\n')+[u'']
         else:
-            greeting = [u'']
+            greeting = []
+        if posting_style == 'tofu':
+            greeting += [u'']
         template += greeting
         if goodbye:
+            if placeholder:
+                goodbye += placeholder
             goodbye = [u'']+goodbye.split(u'\n')
             template += goodbye
+        else:
+            goodbye = []
         if signature:
             template += [u'']
         d = {
             'template_lines': len(template),
             'template': list2vim(template),
             'after_template': len(template) + 1,
+            'after_greeting': len(greeting) + 1,
             'greeting_lines': len(greeting),
+            'greeting': list2vim(greeting),
+            'goodbye': list2vim(goodbye),
             'attribution_last_char': attribution[-1],
         }
-        if edit_headers:
-            script = script_editheaders % d
-        else:
-            script = script_noeditheaders % d
+        script = vimscripts[edit_headers][posting_style][bool(placeholder)] % d
 
     if language:
         script += u'|set spell spelllang=%s' % language
@@ -123,17 +71,19 @@ def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', s
 _gen_template_mapping = {
     'vim': gen_vim_template,
 }
-def gen_template(editor_type, greeting=u'', goodbye=u'', language=u'', attribution=u'', signature=u'', edit_headers=False, max_length=256):
+def gen_template(editor_type, greeting=u'', goodbye=u'', language=u'', attribution=u'',
+                 signature=u'', posting_style=u'tofu', edit_headers=False, placeholder=u'',
+                 max_length=256):
     f = _gen_template_mapping[editor_type]
-    editor_args = f(greeting, goodbye, language, attribution, signature, edit_headers)
+    editor_args = f(greeting, goodbye, language, attribution, signature, posting_style, edit_headers, placeholder)
     if len(editor_args) < max_length:
         return editor_args
     log.debug('length of editor variable >= %d, skipping goodbye message: %s', max_length, goodbye, v=3)
-    editor_args = f(greeting, u'', language, attribution, signature, edit_headers)
+    editor_args = f(greeting, u'', language, attribution, signature, posting_style, edit_headers, placeholder)
     if len(editor_args) < max_length:
         return editor_args
     log.debug('length of editor variable >= %d, skipping greeting message: %s', max_length, greeting, v=3)
-    editor_args = f(u'', u'', language, attribution, signature, edit_headers)
+    editor_args = f(u'', u'', language, attribution, signature, posting_style, edit_headers, placeholder)
     if len(editor_args) < max_length:
         return editor_args
     log.debug('length of editor variable STILL >= %d, skipping', max_length, v=3)
@@ -451,7 +401,9 @@ class MuttOutput(object):
                                     language=spelllang,
                                     attribution=attribution,
                                     signature=signature,
+                                    posting_style=get_max_key(r.posting_style),
                                     edit_headers=options['edit_headers'],
+                                    placeholder=options['template_insert_placeholder'],
                                     max_length=options['max_path_length']-len(options['editor'])-len(u' ""\0'))
             if template:
                 val_editor = u'"$my_default_editor %s"' % escape_double_quote(template)
