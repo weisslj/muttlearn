@@ -1,13 +1,19 @@
 Installation
 
 optional (but recommended) dependencies:
-- guess_language: http://code.google.com/p/guess-language/
-- PyMe: http://pyme.sourceforge.net/
+- guess_language
+  http://code.google.com/p/guess-language/
+- PyMe
+  http://pyme.sourceforge.net/
+  in Debian or Ubuntu:
+  aptitude install python-pyme
 
 for python >= 2.6
 
   python setup.py install --user
   export PATH=$PATH:~/.local/bin
+
+You can also use --prefix but you may need to adapt PYTHONPATH in this case.
 
 for python 2.5:
 
@@ -16,6 +22,6 @@ for python 2.5:
   export PATH=$PATH:~/.local/bin
 
 
-For removal, just delete all installed files:
+For removal, just delete all installed files, e.g.:
 
-  rm -rvf ~/.local/bin/muttlearn ~/.local/lib/python*/site-packages/muttlearn*
+  rm -rvf ~/.local/bin/muttlearn ~/.local/lib/python*/*-packages/muttlearn*
