@@ -40,7 +40,7 @@ def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', s
             greeting = greeting.split(u'\n')+[u'']
         else:
             greeting = []
-        if posting_style == 'tofu':
+        if posting_style == u'tofu':
             greeting += [u'']
         template += greeting
         if goodbye:
