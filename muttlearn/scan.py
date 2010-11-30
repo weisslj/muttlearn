@@ -90,7 +90,7 @@ class MessageBody(object):
                 following_quote = False
                 if line:
                     unquoted.append(line)
-            cur.append(line)
+                cur.append(line)
         if bottom:
             del interleaved[-len(bottom):]
         self.top = u'\n'.join(top)
