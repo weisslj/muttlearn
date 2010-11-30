@@ -76,6 +76,14 @@ if f==""||f=~"%(attribution_last_char)s$"
     en
 '''
                 else:
+                    if use_placeholder:
+                        script += '''
+    " if first line was empty, there is no quoted text
+    " remove line, because placeholder is there instead of blank line
+    if f==""
+        %(after_greeting)dd
+    en
+'''
                     if use_signature:
                         script += '''
     " append goodbye message at the end, but before signature

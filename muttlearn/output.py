@@ -40,13 +40,15 @@ def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', s
             greeting = greeting.split(u'\n')+[u'']
         else:
             greeting = []
-        if posting_style == u'tofu':
+        if posting_style == u'tofu' and not placeholder:
             greeting += [u'']
         template += greeting
         if goodbye:
             if placeholder:
                 goodbye += placeholder
             goodbye = [u'']+goodbye.split(u'\n')
+            if placeholder:
+                goodbye.insert(0, placeholder)
         else:
             goodbye = []
         if signature:
