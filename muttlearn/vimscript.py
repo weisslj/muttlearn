@@ -27,44 +27,46 @@ for edit_headers in [True, False]:
     dplus = 'd+' if edit_headers else ''
     for posting_style in [u'tofu', u'inline']:
         vimscripts[edit_headers][posting_style] = {}
-        for use_placeholder in [True, False]:
-            script = ''
-            if edit_headers:
-                script += '''
+        for use_signature in [True, False]:
+            vimscripts[edit_headers][posting_style][use_signature] = {}
+            for use_placeholder in [True, False]:
+                script = ''
+                if edit_headers:
+                    script += '''
 " search empty line after the headers
 call cursor(1,0)
 let d=search("^$")
 
 let f=getline(min([line("$"),d+1]))
 '''
-            else:
-                script += '''
+                else:
+                    script += '''
 let f=getline(1)
 '''
-            script += '''
+                script += '''
 " only insert greeting/goodbye if not already there!
 if f==""||f=~"%(attribution_last_char)s$"
 '''
-            if posting_style == u'tofu':
-                script += '''
+                if posting_style == u'tofu':
+                    script += '''
     call append('''+d+''',%(template)s)
 '''
-            else:
-                script += '''
+                else:
+                    script += '''
     call append('''+d+''',%(greeting)s)
 '''
 
-            if posting_style == u'tofu':
-                if edit_headers:
-                    script += '''
+                if posting_style == u'tofu':
+                    if edit_headers:
+                        script += '''
     " if first line was not empty, there is quoted text
     " insert newline to seperate from it
     if f!=""
         call append(d+%(template_lines)d,"")
     en
 '''
-                else:
-                    script += '''
+                    else:
+                        script += '''
     " if first line was not empty, there is quoted text
     " insert newline to seperate from it
     if f!=""
@@ -73,26 +75,36 @@ if f==""||f=~"%(attribution_last_char)s$"
         %(after_template)dd
     en
 '''
-            else:
-                script += '''
+                else:
+                    if use_signature:
+                        script += '''
+    " append goodbye message at the end, but before signature
+    let s=search("^-- $")-1
+    if s<0
+        let s=line("$")
+    en
+    call append(s,%(goodbye)s)
+'''
+                    else:
+                        script += '''
     " append goodbye message at the end
     call append("$",%(goodbye)s)
 '''
 
-            if use_placeholder:
-                script += '''
+                if use_placeholder:
+                    script += '''
     " move cursor to beginning of file
     call cursor(1,1)
 '''
-            else:
-                script += '''
+                else:
+                    script += '''
     " move cursor below greeting
     call cursor('''+dplus+'''%(greeting_lines)d,1)
 
     " start insert mode
     star
 '''
-            script += '''
+                script += '''
 en
 '''
-            vimscripts[edit_headers][posting_style][use_placeholder] = vimscript_tidy(script)
+                vimscripts[edit_headers][posting_style][use_signature][use_placeholder] = vimscript_tidy(script)

@@ -47,11 +47,11 @@ def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', s
             if placeholder:
                 goodbye += placeholder
             goodbye = [u'']+goodbye.split(u'\n')
-            template += goodbye
         else:
             goodbye = []
         if signature:
-            template += [u'']
+            goodbye += [u'']
+        template += goodbye
         d = {
             'template_lines': len(template),
             'template': list2vim(template),
@@ -62,7 +62,7 @@ def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', s
             'goodbye': list2vim(goodbye),
             'attribution_last_char': attribution[-1],
         }
-        script = vimscripts[edit_headers][posting_style][bool(placeholder)] % d
+        script = vimscripts[edit_headers][posting_style][bool(signature)][bool(placeholder)] % d
 
     if language:
         script += u'|set spell spelllang=%s' % language
