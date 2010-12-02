@@ -21,15 +21,19 @@ from vimscript import vimscripts
 
 def vimscript_escape(s):
     s = s.replace(u'\n', u'\\n')
-    s = s.replace(u'"', u'\\\\"')
+    s = s.replace(u'"', u'\\"')
+    return s
+
+def script_escape(s):
+    s = s.replace(u'"', u'\\"')
     return s
 
 def list2vim(lst):
     """Convert python list to a string containing a vim-script list."""
     return u'[%s]' % ','.join([u'"%s"' % x for x in lst])
 
-def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', signature=u'',
-                     posting_style=u'tofu', edit_headers=False, placeholder=u''):
+def gen_vim_script(greeting=u'', goodbye=u'', language=u'', attribution=u':', signature=u'',
+                   posting_style=u'tofu', edit_headers=False, placeholder=u''):
     script = u'star'
     template = []
 
@@ -68,24 +72,29 @@ def gen_vim_template(greeting=u'', goodbye=u'', language=u'', attribution=u'', s
 
     if language:
         script += u'|set spell spelllang=%s' % language
-    return u'-c"%s"' % vimscript_escape(script.strip())
+    return vimscript_escape(script.strip())
+
+
+def gen_vim_template(*args, **kwargs):
+    script = gen_vim_script(*args, **kwargs)
+    return u'-c"%s"' % script_escape(script)
 
 _gen_template_mapping = {
     'vim': gen_vim_template,
 }
-def gen_template(editor_type, greeting=u'', goodbye=u'', language=u'', attribution=u'',
-                 signature=u'', posting_style=u'tofu', edit_headers=False, placeholder=u'',
-                 max_length=256):
+def gen_template(editor_type, max_length=256, *args, **kwargs):
     f = _gen_template_mapping[editor_type]
-    editor_args = f(greeting, goodbye, language, attribution, signature, posting_style, edit_headers, placeholder)
+    editor_args = f(*args, **kwargs)
     if len(editor_args) < max_length:
         return editor_args
     log.debug('length of editor variable >= %d, skipping goodbye message: %s', max_length, goodbye, v=3)
-    editor_args = f(greeting, u'', language, attribution, signature, posting_style, edit_headers, placeholder)
+    kwargs['goodbye'] = u''
+    editor_args = f(*args, **kwargs)
     if len(editor_args) < max_length:
         return editor_args
     log.debug('length of editor variable >= %d, skipping greeting message: %s', max_length, greeting, v=3)
-    editor_args = f(u'', u'', language, attribution, signature, posting_style, edit_headers, placeholder)
+    kwargs['greeting'] = u''
+    editor_args = f(*args, **kwargs)
     if len(editor_args) < max_length:
         return editor_args
     log.debug('length of editor variable STILL >= %d, skipping', max_length, v=3)
@@ -398,6 +407,7 @@ class MuttOutput(object):
 
             spelllang = language if self.enable_spellcheck else u''
             template = gen_template(self.editor_type,
+                                    max_length=options['max_path_length']-len(options['editor'])-len(u' ""\0'),
                                     greeting=greeting,
                                     goodbye=goodbye,
                                     language=spelllang,
@@ -405,8 +415,7 @@ class MuttOutput(object):
                                     signature=signature,
                                     posting_style=get_max_key(r.posting_style),
                                     edit_headers=options['edit_headers'],
-                                    placeholder=options['template_insert_placeholder'],
-                                    max_length=options['max_path_length']-len(options['editor'])-len(u' ""\0'))
+                                    placeholder=options['template_insert_placeholder'])
             if template:
                 val_editor = u'"$my_default_editor %s"' % escape_double_quote(template)
             app(u'editor=%s', val_editor)
