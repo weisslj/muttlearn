@@ -207,7 +207,6 @@ def main(argv=None):
         use_cache = not config.db_needs_rebuilding()
     if not use_cache:
         options.clean_cache = True
-    if not use_cache:
         log.debug('rebuilding message cache (slow!)')
         config.save_to_cache()
     else:
