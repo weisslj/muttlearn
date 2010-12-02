@@ -185,8 +185,6 @@ class MailboxMessage(Message):
         self.identify()
 
     def has_changed(self, d):
-        if not d:
-            return True
         if not self.is_single_file:
             if d['adler32'] == self.adler32:
                 return False

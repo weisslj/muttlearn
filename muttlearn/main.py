@@ -38,6 +38,7 @@ def load_recipients():
     return recipients
 
 cache_messages_path = os.path.expanduser('~/.muttlearn/cache_messages')
+cache_messages_tmp_path = cache_messages_path + '.tmp'
 def gen_recipients_from_cache(options, progress=False):
     if not os.path.exists(cache_messages_path):
         return {}
@@ -77,10 +78,10 @@ def gen_recipients(mailboxes, options, use_cache=True, clean_cache=False, progre
     if not os.path.exists(base):
         os.makedirs(base)
     max_age = options['max_age']
-    dstore = shelve.open(cache_messages_path, protocol=2)
+    flag = 'r' if clean_cache else 'c'
+    dstore = shelve.open(cache_messages_path, flag=flag, protocol=2)
+    dstore_write = shelve.open(cache_messages_tmp_path, flag='n', protocol=2) if clean_cache else dstore
     recipients = {}
-    if clean_cache:
-        store_keys_used = set()
     n_mailboxes = len(mailboxes)
     for i, mb in enumerate(mailboxes):
         if progress:
@@ -92,10 +93,10 @@ def gen_recipients(mailboxes, options, use_cache=True, clean_cache=False, progre
                 pstatus.inc()
                 pstatus.output()
             d = dstore.get(msg.identifier)
-            if use_cache and not msg.has_changed(d):
+            if use_cache and d and not msg.has_changed(d):
                 msg.from_dict(d)
                 if clean_cache:
-                    store_keys_used.add(msg.identifier)
+                    dstore_write[msg.identifier] = d
             else:
                 if not msg.parse_header():
                     continue
@@ -103,9 +104,7 @@ def gen_recipients(mailboxes, options, use_cache=True, clean_cache=False, progre
                 msg.parse_body()
                 if msg.identifier:
                     msg.to_dict(d)
-                    dstore[msg.identifier] = d
-                    if clean_cache:
-                        store_keys_used.add(msg.identifier)
+                    dstore_write[msg.identifier] = d
 
             if options['skip_multiple_recipients'] and len(msg.to_emails) > 1:
                 continue
@@ -123,11 +122,10 @@ def gen_recipients(mailboxes, options, use_cache=True, clean_cache=False, progre
                 recipients[msg.to_emails_str].add(msg)
         if progress:
             pstatus.finish()
-    if clean_cache:
-        keys_to_delete = set(dstore.keys()) - store_keys_used
-        for k in keys_to_delete:
-            del dstore[k]
     dstore.close()
+    if clean_cache:
+        dstore_write.close()
+        os.rename(cache_messages_tmp_path, cache_messages_path)
     return recipients
 
 
