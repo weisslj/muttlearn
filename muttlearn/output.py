@@ -87,12 +87,12 @@ def gen_template(editor_type, max_length=256, *args, **kwargs):
     editor_args = f(*args, **kwargs)
     if len(editor_args) < max_length:
         return editor_args
-    log.debug('length of editor variable >= %d, skipping goodbye message: %s', max_length, goodbye, v=3)
+    log.debug('length of editor variable >= %d, skipping goodbye message', max_length, v=3)
     kwargs['goodbye'] = u''
     editor_args = f(*args, **kwargs)
     if len(editor_args) < max_length:
         return editor_args
-    log.debug('length of editor variable >= %d, skipping greeting message: %s', max_length, greeting, v=3)
+    log.debug('length of editor variable >= %d, skipping greeting message', max_length, v=3)
     kwargs['greeting'] = u''
     editor_args = f(*args, **kwargs)
     if len(editor_args) < max_length:
