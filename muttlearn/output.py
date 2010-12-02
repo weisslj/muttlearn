@@ -17,6 +17,8 @@ import math
 import crypto
 import log
 from muttrc import expand_signature
+import vimscript
+vimscript.init()
 from vimscript import vimscripts
 
 def vimscript_escape(s):
