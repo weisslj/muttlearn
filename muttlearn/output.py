@@ -52,7 +52,7 @@ def gen_vim_script(greeting=u'', goodbye=u'', language=u'', attribution=u':', si
             if placeholder:
                 goodbye[0] = placeholder
         else:
-            goodbye = []
+            goodbye = [u'']
         if signature and not (edit_headers and posting_style == u'tofu'):
             # seperate signature from goodbye message
             # when headers are present, there is already a newline
