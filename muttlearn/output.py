@@ -44,18 +44,20 @@ def gen_vim_script(greeting=u'', goodbye=u'', language=u'', attribution=u':', si
             greeting = greeting.split(u'\n')+[u'']
         else:
             greeting = []
-        if posting_style == u'tofu' and not placeholder:
-            greeting += [u'']
         template += greeting
         if goodbye:
             if placeholder:
                 goodbye += placeholder
-            goodbye = [u'']+goodbye.split(u'\n')
+            goodbye = 2*[u'']+goodbye.split(u'\n')
             if placeholder:
-                goodbye.insert(0, placeholder)
+                goodbye[0] = placeholder
         else:
             goodbye = []
-        if signature:
+        if signature and not (edit_headers and posting_style == u'tofu'):
+            # seperate signature from goodbye message
+            # when headers are present, there is already a newline
+            # attention: needs to be corrected in vimscript if there
+            # posting_style is tofu and there is qoted text
             goodbye += [u'']
         template += goodbye
         d = {

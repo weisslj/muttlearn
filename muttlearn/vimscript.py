@@ -51,13 +51,24 @@ if f==""||f=~"%(attribution_last_char)s$"
                     script += '''
     call append('''+d+''',%(template)s)
 '''
-                else:
-                    script += '''
-    call append('''+d+''',%(greeting)s)
+                    if not edit_headers:
+                        script += '''
+    " The input file contains an empty line, which can only be removed
+    " after first append(). This is not true if there is quoted text!
+    " In this case, we even have to append one line to separate
+    " (not when there is a signature)!
+    if f==""
+        %(after_template)dd
 '''
-
-                if posting_style == u'tofu':
-                    if edit_headers:
+                        if not use_signature:
+                            script += '''
+    el
+        call append(%(template_lines)d,"")
+'''
+                        script += '''
+    en
+'''
+                    else: # edit_headers
                         script += '''
     " if first line was not empty, there is quoted text
     " insert newline to seperate from it
@@ -65,23 +76,25 @@ if f==""||f=~"%(attribution_last_char)s$"
         call append(d+%(template_lines)d,"")
     en
 '''
-                    else:
-                        script += '''
-    " if first line was not empty, there is quoted text
-    " insert newline to seperate from it
-    if f!=""
-        call append(%(template_lines)d,"")
-    el
-        %(after_template)dd
-    en
+                else: # posting_style == u'inline'
+                    script += '''
+    " append greeting
+    call append('''+d+''',%(greeting)s)
 '''
-                else:
-                    if use_placeholder:
+                    if not edit_headers:
                         script += '''
-    " if first line was empty, there is no quoted text
-    " remove line, because placeholder is there instead of blank line
+    " The input file contains an empty line, which can only be removed
+    " after first append(). This is not true if there is quoted text!
     if f==""
         %(after_greeting)dd
+    en
+'''
+                    elif use_signature: # edit_headers
+                        script += '''
+    " signature inserts newline, not needed!
+    if f==""
+        call cursor(d+%(after_greeting)d, 0)
+        d
     en
 '''
                     if use_signature:
@@ -92,14 +105,20 @@ if f==""||f=~"%(attribution_last_char)s$"
         let s=line("$")
     en
     call append(s,%(goodbye)s)
+    if f!=""
+        call cursor(s,0)
+        d
+    en
 '''
-                    else:
+                    else:  # not use_signature
                         script += '''
     " append goodbye message at the end
     call append("$",%(goodbye)s)
 '''
 
-                if use_placeholder:
+
+# just cursor positioning from here!
+                if posting_style == u'inline' or use_placeholder:
                     script += '''
     " move cursor to beginning of file
     call cursor(1,1)
@@ -107,7 +126,7 @@ if f==""||f=~"%(attribution_last_char)s$"
                 else:
                     script += '''
     " move cursor below greeting
-    call cursor('''+dplus+'''%(greeting_lines)d,1)
+    call cursor('''+dplus+'''%(after_greeting)d,1)
 
     " start insert mode
     star
