@@ -27,17 +27,20 @@ import config
 import log
 from common import filter_any
 
-guessLanguage = lambda x: ''
-def prepare():
+guessLanguage = None
+def init_guess_language():
     """Loads the guess_language module.
     This takes 1-2 seconds, so it is delayed to increase responsiveness.
 
     """
     global guessLanguage
+    if guessLanguage is not None:
+        return
     try:
         from guess_language import guessLanguage
     except ImportError, e:
         log.debug('failed to import guess_language, language guessing disabled: %s', e)
+        guessLanguage = lambda x: ''
 
 def decode_header(h, encodings_used=None):
     """Return unicode representation of header body, e.g.:
@@ -138,14 +141,8 @@ class Message(object):
         self.posting_style = d['posting_style']
     def from_dict_only(self, d):
         self.from_dict(d)
-        self.mbox_path = d['mbox_path']
 
     def to_dict(self, d):
-        # only required in cache only mode
-        d['mbox_path'] = self.mbox_path
-
-        d['adler32'] = self.adler32
-
         d['from_hdr'] = self.from_hdr
         d['from_email'] = self.from_email
         d['from_realname'] = self.from_realname
@@ -169,48 +166,94 @@ class MailboxMessage(Message):
     _re_smileys = re.compile(r'(>From )|(:[-^]?[][)(><}{|/DP])')
     _assumed_charsets = ['us-ascii', 'iso-8859-1', 'utf-8']
 
-    def __init__(self, path, mbox, mbox_key):
+    def __init__(self, path, mbox, mbox_key, is_single_file=True):
         super(MailboxMessage, self).__init__()
         self.mbox_path = path
         self.mbox = mbox
         self.mbox_key = mbox_key
+        self.is_single_file = is_single_file
+        self.identifier = ''
 
-        buf = mbox.get_string(mbox_key)
-        self.adler32 = zlib.adler32(buf)
-        msgid_match = self._re_msgid.search(buf)
-        self.msgid = msgid_match.group(1).strip() if msgid_match else ''
-        if not self.msgid:
-            log.debug('message has no Message-ID, cannot cache: %s -> %s', path, mbox_key)
+        # for directory mailboxes like Maildir and MH
+        self.path = ''
+        self.mtime = -1
+
+        # for file mailboxes like mbox, MMDF and Babyl
+        self.msgid = ''
+        self.adler32 = ''
+
+        self.identify()
+
+    def has_changed(self, d):
+        if not d:
+            return True
+        if not self.is_single_file:
+            if d['adler32'] == self.adler32:
+                return False
+            return True
+        else:
+            msg_mtime = os.path.getmtime(self.path)
+            return msg_mtime > d['mtime']
+
+    def identify(self):
+        if not self.is_single_file:
+            buf = self.mbox.get_string(self.mbox_key)
+            msgid_match = self._re_msgid.search(buf)
+            if msgid_match:
+                self.msgid = msgid_match.group(1).strip()
+                self.adler32 = zlib.adler32(buf)
+                self.identifier = '%s\0%s' % (self.mbox_path, self.msgid)
+            else:
+                log.debug('message has no Message-ID, cannot cache: %s -> %s', self.mbox_path, self.mbox_key)
+        else:
+            f = self.mbox.get_file(self.mbox_key)
+            self.path = f._file.name
+            self.identifier = self.path
+            self.mtime = os.path.getmtime(self.path)
+
+    def to_dict(self, d):
+        super(MailboxMessage, self).to_dict(d)
+        d['mbox_path'] = self.mbox_path
+        d['mtime'] = self.mtime
+        d['adler32'] = self.adler32
+
+    def from_dict(self, d):
+        super(MailboxMessage, self).from_dict(d)
+        self.mtime = d['mtime']
+        self.adler32 = d['adler32']
+
+    def from_dict_only(self, d):
+        super(MailboxMessage, self).from_dict_only(d)
+        self.mbox_path = d['mbox_path']
 
     def parse_header(self):
         msg = self.mbox.get_message(self.mbox_key)
         self.msg = msg
-        msgid = self.msgid or self.mbox_key
 
         self.encodings_used = set()
         try:
             self.from_hdr = decode_header(msg['From'], self.encodings_used)
         except UnicodeDecodeError, e:
-            log.debug('can not decode From: header of %s: %s', msgid, str(e))
+            log.debug('can not decode From: header of %s: %s', self.identifier, str(e))
             return False
 
         try:
             to_hdr = decode_header(msg['To'], self.encodings_used)
         except UnicodeDecodeError, e:
-            log.debug('can not decode To: header of %s: %s', msgid, str(e))
+            log.debug('can not decode To: header of %s: %s', self.identifier, str(e))
             return False
 
         date_str = decode_header(msg['Date'])
 
         from_decoded = email.utils.getaddresses([self.from_hdr])
         if not from_decoded or not from_decoded[0][1]:
-            log.debug('mail has no sender: %s', msgid)
+            log.debug('mail has no sender: %s', self.identifier)
             return False
         self.from_email = from_decoded[0][1].lower()
         self.from_realname = from_decoded[0][0]
         self.to_emails = set(e.lower() for n, e in email.utils.getaddresses([to_hdr]))
         if not self.to_emails:
-            log.debug('mail has no recipient: %s', msgid)
+            log.debug('mail has no recipient: %s', self.identifier)
             return False
         self.to_emails_str = ' '.join(sorted(self.to_emails))
 
@@ -224,18 +267,16 @@ class MailboxMessage(Message):
         return True
 
     def parse_body(self):
-        msgid = self.msgid or self.mbox_key
-
         if self.msg.is_multipart():
             for part in self.msg.walk():
                 if part.get_content_type() == 'text/plain':
                     self.msg = part
                     break
             else:
-                log.debug('%s message contains no text/plain subpart: %s', self.msg.get_content_type(), msgid, v=2)
+                log.debug('%s message contains no text/plain subpart: %s', self.msg.get_content_type(), self.identifier, v=2)
                 return False
         if self.msg.get_content_type() != 'text/plain':
-            log.debug('content type %s not supported: %s', self.msg.get_content_type(), msgid, v=2)
+            log.debug('content type %s not supported: %s', self.msg.get_content_type(), self.identifier, v=2)
             return False
 
         self.charset = self.msg.get_content_charset('')
@@ -259,11 +300,11 @@ class MailboxMessage(Message):
         # if unicode conversion failed, skip body detection altogether
         # nobody benefits from distorted strings
         if unicode_error is not None:
-            log.debug('can not decode body of %s: %s', msgid, unicode_error)
+            log.debug('can not decode body of %s: %s', self.identifier, unicode_error)
             return False
 
         if not self.body:
-            log.debug('empty body: %s', msgid, v=3)
+            log.debug('empty body: %s', self.identifier, v=3)
             return False
 
         # convert dos line feeds to unix line feeds
@@ -288,6 +329,7 @@ class MailboxMessage(Message):
         if len(mb.interleaved) + len(mb.bottom) > len(mb.top):
             self.posting_style = u'inline'
 
+        init_guess_language()
         words_to_guess = u' '.join(re.split(r'\W+', u'%s %s' % (mb.unquoted, mb.quoted))[:20])
         guessed_language = guessLanguage(words_to_guess)
         self.language = guessed_language if guessed_language != 'UNKNOWN' else ''
@@ -352,6 +394,7 @@ class Mailbox(object):
         self.path = os.path.realpath(path)
         if type == 'auto':
             type = self.recognize()
+        self.isdir = os.path.isdir(self.path)
         if type == 'mbox':
             self.mb = mailbox.mbox(path, create=False)
             self.try_decompress()
@@ -372,7 +415,7 @@ class Mailbox(object):
 
     def messages(self):
         for k in self.mb.iterkeys():
-            yield MailboxMessage(self.path, self.mb, k)
+            yield MailboxMessage(self.path, self.mb, k, self.isdir)
 
     def try_decompress(self):
         if re.match(r'.*\.gz$', self.path):

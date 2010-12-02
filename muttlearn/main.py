@@ -48,12 +48,12 @@ def gen_recipients_from_cache(options, progress=False):
     log.info('cache only, %d messages', n_messages)
     if progress:
         pstatus = log.PercentStatus(n_messages, prefix='      ')
-    for msgid in dstore:
+    for identifier in dstore:
         if progress:
             pstatus.inc()
             pstatus.output()
         msg = scan.Message()
-        msg.from_dict_only(dstore[msgid])
+        msg.from_dict_only(dstore[identifier])
         if options['skip_multiple_recipients'] and len(msg.to_emails) > 1:
             continue
         if options['exclude_mails_to_me'] and filter_any(config.is_this_me, msg.to_emails):
@@ -91,16 +91,22 @@ def gen_recipients(mailboxes, options, use_cache=True, clean_cache=False, progre
             if progress:
                 pstatus.inc()
                 pstatus.output()
-            msgid = msg.msgid
-            d = dstore.get(msgid)
-            if msgid and d and d['adler32'] == msg.adler32 and use_cache:
+            d = dstore.get(msg.identifier)
+            if use_cache and not msg.has_changed(d):
                 msg.from_dict(d)
                 if clean_cache:
-                    store_keys_used.add(msgid)
+                    store_keys_used.add(msg.identifier)
             else:
                 if not msg.parse_header():
                     continue
                 d = {}
+                msg.parse_body()
+                if msg.identifier:
+                    msg.to_dict(d)
+                    dstore[msg.identifier] = d
+                    if clean_cache:
+                        store_keys_used.add(msg.identifier)
+
             if options['skip_multiple_recipients'] and len(msg.to_emails) > 1:
                 continue
             if options['exclude_mails_to_me'] and filter_any(config.is_this_me, msg.to_emails):
@@ -109,13 +115,6 @@ def gen_recipients(mailboxes, options, use_cache=True, clean_cache=False, progre
                 continue
             if max_age >= 0 and msg.age > max_age:
                 continue
-            if not d:
-                msg.parse_body()
-                if msgid:
-                    msg.to_dict(d)
-                    dstore[msgid] = d
-                    if clean_cache:
-                        store_keys_used.add(msgid)
 
             if msg.to_emails_str not in recipients:
                 r = scan.Recipient(msg.to_emails, msg)
@@ -220,7 +219,6 @@ def main(argv=None):
                                                progress=options.progress)
     else:
         scan.init(config.options())
-        scan.prepare()
     
         mailboxes = [scan.Mailbox(path, 'auto') for path in mailbox_paths]
     

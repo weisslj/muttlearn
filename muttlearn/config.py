@@ -150,7 +150,7 @@ def init(conf_path=None, mutt_conf_path=None, read_muttrc=True):
         options['only_include_mails_from_me'] = False
 
 cache_conf_path = os.path.expanduser('~/.muttlearn/cache_config')
-cache_version = 1
+cache_version = 2
 
 def db_needs_rebuilding():
     """Check if configuration values that affect scanning process have changed."""
