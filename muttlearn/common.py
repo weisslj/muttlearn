@@ -6,7 +6,7 @@
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law
 
-__version__ = '1.0'
+__version__ = '1.2'
 
 def filter_any(pred, seq):
     for x in seq:

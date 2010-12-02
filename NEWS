@@ -1,0 +1,19 @@
+muttlearn (1.2)
+
+  * Many bugfixes
+  * Increased performance (8x faster re-indexing), especially for Maildir/MH
+  * Add $max_path_length option if your version of mutt can handle more than
+    256 characters in $editor
+  * Make regular expressions configurable:
+    $greeting_regexp and $goodbye_regexp
+  * Learn if you prefer to write TOFU or inline when replying
+  * Ability to add vim placeholder (e.g. <++>) to greeting, body and goodbye
+    message: $template_insert_placeholder
+  
+ -- Johannes Weißl <jargon@molb.org>  Thu Dec 2 23:33:13 2010 +0100
+
+muttlearn (1.0)
+
+  * Initial release.
+
+ -- Johannes Weißl <jargon@molb.org>  Fri Nov 26 21:13:21 2010 +0100
