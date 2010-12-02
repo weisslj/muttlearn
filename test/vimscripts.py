@@ -74,14 +74,14 @@ else:
         out_empty_placeholder = u'<++>\n\n%s<++>\n' % goodbye
         out_greeting = u'\n'
         out_goodbye = u'\n\n%s\n' % goodbye
-        out_greeting_placeholder =u'\n'
+        out_greeting_placeholder = u'\n'
         out_goodbye_placeholder = u'<++>\n\n%s<++>\n' % goodbye
     else: # overwritten below!
         out_empty = u''
         out_empty_placeholder = u''
         out_greeting = u''
         out_goodbye = u''
-        out_greeting_placeholder =u''
+        out_greeting_placeholder = u''
         out_goodbye_placeholder = u''
 
 
@@ -244,17 +244,17 @@ def out(msg, *args, **kwargs):
     sys.stdout.write(msg+end)
 
 def outcmp(s1, s2):
-    s1 = s1[:-1] if s1.endswith(u'\n') else s1
-    s2 = s2[:-1] if s2.endswith(u'\n') else s2
-    s1 = s1.split(u'\n')
-    s2 = s2.split(u'\n')
+    s1 = s1[:-1] if s1.endswith('\n') else s1
+    s2 = s2[:-1] if s2.endswith('\n') else s2
+    s1 = s1.split('\n')
+    s2 = s2.split('\n')
     diff = len(s1) - len(s2)
     if diff < 0:
-        s1 += -diff*[u'~']
+        s1 += -diff*['~']
     else:
-        s2 += diff*[u'~']
+        s2 += diff*['~']
     for x, y in zip(s1, s2):
-        out(u'%-36s | %-36s', x, y)
+        out('%-36s | %-36s', x, y)
 
 def out_all(s_input, s_good, s_bad):
     out('-----------------------------------input--------------------------------------')
