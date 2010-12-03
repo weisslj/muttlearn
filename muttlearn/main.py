@@ -77,6 +77,9 @@ def gen_recipients(mailboxes, options, use_cache=True, clean_cache=False, progre
     base = os.path.dirname(cache_messages_path)
     if not os.path.exists(base):
         os.makedirs(base)
+    if not os.path.exists(cache_messages_path):
+        # if there is no cache, it doesn't need to be cleaned
+        clean_cache = False
     max_age = options['max_age']
     flag = 'r' if clean_cache else 'c'
     dstore = shelve.open(cache_messages_path, flag=flag, protocol=2)
