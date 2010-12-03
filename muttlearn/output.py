@@ -197,6 +197,8 @@ class MuttOutput(object):
     def write(self, msg):
         if type(msg) == unicode:
             msg = msg.encode(self.output_charset, 'replace')
+        else:
+            raise TypeError('write() takes only unicode arguments')
         self.outfile.write(msg)
 
     def output_header(self):
