@@ -39,6 +39,43 @@ def load_recipients():
 
 cache_messages_path = os.path.expanduser('~/.muttlearn/cache_messages')
 cache_messages_tmp_path = cache_messages_path + '.tmp'
+cache_messages_lock_path = cache_messages_path + '.lock'
+
+def acquire_lock():
+    base = os.path.dirname(cache_messages_lock_path)
+    if not os.path.exists(base):
+        os.makedirs(base)
+    if os.path.exists(cache_messages_lock_path):
+        try:
+            f = open(cache_messages_lock_path, 'rb')
+            pid = int(f.read().strip())
+        except IOError, e:
+            log.error('could not open lock file: %s', e)
+        else:
+            f.close()
+        try:
+            os.kill(pid, 0)
+        except OSError, err:
+            if err.errno == errno.ESRCH:
+                log.info('removing stale lock file %s', cache_messages_lock_path)
+            elif err.errno == errno.EPERM:
+                log.error('no permission to signal process %d, remove %s manually!', pid, cache_messages_lock_path)
+            else:
+                log.error('unknown error while signalling process %d, remove %s manually!', pid, cache_messages_lock_path)
+        else:
+            log.error('already running, if not remove %s manually!', cache_messages_lock_path)
+    try:
+        f = open(cache_messages_lock_path, 'wb')
+        f.write(str(os.getpid())+'\n')
+    except IOError, e:
+        log.error('could not write lock file: %s', e)
+    else:
+        f.close()
+
+def release_lock():
+    if os.path.exists(cache_messages_lock_path):
+        os.remove(cache_messages_lock_path)
+
 def gen_recipients_from_cache(options, progress=False):
     if not os.path.exists(cache_messages_path):
         return {}
@@ -204,6 +241,9 @@ def main(argv=None):
     if not mailbox_paths:
         parser.error('no mailbox specified for learning!')
 
+
+    acquire_lock()
+
     if options.rebuild_cache:
         use_cache = False
     else:
@@ -250,6 +290,8 @@ def main(argv=None):
 
     if options.output != '-':
         outfile.close()
+
+    release_lock()
 
 if __name__ == '__main__':
     sys.exit(main())
