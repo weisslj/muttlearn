@@ -78,9 +78,7 @@ def gen_recipients(mailboxes, options, use_cache=True, clean_cache=False, progre
     if not os.path.exists(base):
         os.makedirs(base)
     max_age = options['max_age']
-    flag = 'c'
-    if clean_cache and os.path.exists(cache_messages_path):
-        flag = 'r'
+    flag = 'r' if clean_cache else 'c'
     dstore = shelve.open(cache_messages_path, flag=flag, protocol=2)
     dstore_write = shelve.open(cache_messages_tmp_path, flag='n', protocol=2) if clean_cache else dstore
     recipients = {}
