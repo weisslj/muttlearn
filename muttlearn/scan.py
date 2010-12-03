@@ -42,20 +42,6 @@ def init_guess_language():
         log.debug('failed to import guess_language, language guessing disabled: %s', e)
         guessLanguage = lambda x: ''
 
-def decode_header(h, encodings_used=None):
-    """Return unicode representation of header body, e.g.:
-    '=?utf-8?b?ZMOpasOgIHZ1?=' -> u'déjà vu'
-
-    throws UnicodeDecodeError
-
-    """
-    lst = email.header.decode_header(h)
-    if encodings_used is not None:
-        for x in lst:
-            if x[1]:
-                encodings_used.add(x[1])
-    return unicode(email.header.make_header(lst))
-
 class MessageBody(object):
     _re_control_message = re.compile(r'^-----.*-----$')
 
@@ -224,24 +210,55 @@ class MailboxMessage(Message):
         super(MailboxMessage, self).from_dict_only(d)
         self.mbox_path = d['mbox_path']
 
+    def try_unicode(self, s):
+        unicode_error = None
+        for charset in ([None]+self._assumed_charsets):
+            try: u = unicode(s, charset) if charset else unicode(s)
+            except (UnicodeDecodeError, LookupError), e: unicode_error = e
+            else:
+                return u, charset
+        raise unicode_error
+
+    def decode_header_field(self, h, encodings_used=None):
+        """Return unicode representation of header body, e.g.:
+        '=?utf-8?b?ZMOpasOgIHZ1?=' -> u'déjà vu'
+    
+        throws UnicodeDecodeError
+    
+        """
+        lst = email.header.decode_header(h)
+        try:
+            h_dec = email.header.make_header(lst)
+        except UnicodeDecodeError, e:
+            lst[:] = [(s, self.try_unicode(s)[1]) for s, enc in lst]
+
+        h_dec = email.header.make_header(lst)
+
+        if encodings_used is not None:
+            for x in lst:
+                if x[1]:
+                    encodings_used.add(x[1])
+
+        return unicode(h_dec)
+
     def parse_header(self):
         msg = self.mbox.get_message(self.mbox_key)
         self.msg = msg
 
         self.encodings_used = set()
         try:
-            self.from_hdr = decode_header(msg['From'], self.encodings_used)
+            self.from_hdr = self.decode_header_field(msg['From'], self.encodings_used)
         except UnicodeDecodeError, e:
             log.debug('can not decode From: header of %s: %s', self.identifier, str(e))
             return False
 
         try:
-            to_hdr = decode_header(msg['To'], self.encodings_used)
+            to_hdr = self.decode_header_field(msg['To'], self.encodings_used)
         except UnicodeDecodeError, e:
             log.debug('can not decode To: header of %s: %s', self.identifier, str(e))
             return False
 
-        date_str = decode_header(msg['Date'])
+        date_str = self.decode_header_field(msg['Date'])
 
         from_decoded = email.utils.getaddresses([self.from_hdr])
         if not from_decoded or not from_decoded[0][1]:
@@ -284,13 +301,13 @@ class MailboxMessage(Message):
             try: self.body = unicode(self.msg.get_payload(decode=True), self.charset)
             except (UnicodeDecodeError, LookupError), e: unicode_error = e
         else:
-            for charset in self._assumed_charsets:
-                try: self.body = unicode(self.msg.get_payload(decode=True), charset)
-                except (UnicodeDecodeError, LookupError), e: unicode_error = e
-                else:
-                    self.charset = charset
-                    unicode_error = None
-                    break
+            try:
+                self.body, charset = self.try_unicode(self.msg.get_payload(decode=True))
+            except (UnicodeDecodeError, LookupError), e:
+                 unicode_error = e
+            else:
+                self.charset = charset if charset else 'us-ascii'
+
         # if body is ascii, look at header for future send_charset
         if self.charset == 'us-ascii' and self.encodings_used:
             self.charset = self.encodings_used.pop()
