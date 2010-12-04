@@ -12,6 +12,7 @@ import re
 import optparse
 import shelve
 import os.path
+import errno
 
 import scan
 import config
