@@ -185,6 +185,7 @@ class MuttOutput(object):
             self.enable_greeting = False
             self.enable_goodbye = False
             self.enable_spellcheck = False
+        self.default_signature = ''
         if (self.enable_greeting or self.enable_goodbye) and not self.enable_signature:
             self.default_signature = expand_signature(options['signature'])
 
