@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2010-2017 Johannes Weißl
@@ -10,27 +9,28 @@
 from distutils.core import setup
 import muttlearn
 
-setup(name = 'muttlearn',
-      version = muttlearn.__version__,
-      description = 'Instead of manually switching profiles, let muttlearn figure it out for you!',
-      author = u'Johannes Weißl',
-      author_email = 'jargon@molb.org',
-      url = 'https://github.com/weisslj/muttlearn',
-      packages = ['muttlearn'],
-      scripts = ['bin/muttlearn'],
-      license='GPLv3+',
-      classifiers = [
-          'Development Status :: 4 - Beta',
-          'Environment :: Console',
-          'Intended Audience :: Developers',
-          'Intended Audience :: System Administrators',
-          'License :: OSI Approved :: GNU General Public License (GPL)',
-          'Natural Language :: English',
-          'Operating System :: POSIX',
-          'Programming Language :: Python :: 2.5',
-          'Programming Language :: Python :: 2.6',
-          'Programming Language :: Python :: 2.7',
-          'Topic :: Communications :: Email',
-          'Topic :: Utilities',
-    ]
+setup(
+    name='muttlearn',
+    version=muttlearn.__version__,
+    description='Instead of manually switching profiles, let muttlearn figure it out for you!',
+    author=u'Johannes Weißl',
+    author_email='jargon@molb.org',
+    url='https://github.com/weisslj/muttlearn',
+    packages=['muttlearn'],
+    scripts=['bin/muttlearn'],
+    license='GPLv3+',
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Natural Language :: English',
+        'Operating System :: POSIX',
+        'Programming Language :: Python :: 2.5',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Communications :: Email',
+        'Topic :: Utilities',
+    ],
 )
