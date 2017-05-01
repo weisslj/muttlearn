@@ -1,1 +1,19 @@
-*.pyc
+# Python
+build/
+dist/
+*.egg-info/
+*.egg
+*.py[cod]
+__pycache__/
+.cache
+
+# Coverage
+.coverage
+htmlcov/
+
+# Vim
+*~
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
