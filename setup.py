@@ -6,7 +6,10 @@
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law
 
-from distutils.core import setup
+"""A setuptools based setup module."""
+
+from setuptools import setup, find_packages
+
 import muttlearn
 
 setup(
@@ -16,8 +19,6 @@ setup(
     author=u'Johannes Weißl',
     author_email='jargon@molb.org',
     url='https://github.com/weisslj/muttlearn',
-    packages=['muttlearn'],
-    scripts=['bin/muttlearn'],
     license='GPLv3+',
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -33,4 +34,10 @@ setup(
         'Topic :: Communications :: Email',
         'Topic :: Utilities',
     ],
+    packages=find_packages(exclude=['docs', 'tests']),
+    entry_points={
+        'console_scripts': [
+            'muttlearn=muttlearn:main',
+        ],
+    },
 )

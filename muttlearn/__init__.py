@@ -7,3 +7,4 @@
 # There is NO WARRANTY, to the extent permitted by law
 
 from common import __version__
+from main import main

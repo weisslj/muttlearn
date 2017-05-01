@@ -1,0 +1,6 @@
+include LICENSE.txt
+include INSTALL
+include NEWS
+include THANKS
+recursive-include docs *
+recursive-include tests *.py
