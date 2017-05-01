@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010 Johannes Weißl
+# Copyright (C) 2010-2017 Johannes Weißl
 # License GPLv3+:
 # GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
 # This is free software: you are free to change and redistribute it.
@@ -180,7 +180,7 @@ def main(argv=None):
             '       muttlearn -D\n'\
             '       muttlearn --output-only'
 
-    version = u'muttlearn %s\nCopyright (C) 2010 Johannes Weißl\n'\
+    version = u'muttlearn %s\nCopyright (C) 2010-2017 Johannes Weißl\n'\
         'License GPLv3+: GNU GPL version 3 or later '\
         '<http://gnu.org/licenses/gpl.html>.\n'\
         'This is free software: you are free to change and redistribute it.\n'\

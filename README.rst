@@ -1,6 +1,5 @@
--------------
-| muttlearn |
--------------
+muttlearn
+=========
 
 muttlearn is an alternative to manually maintaining profiles in mutt.
 It scans your mailboxes, learns how you want to write mails (e.g.

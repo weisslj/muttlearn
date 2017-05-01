@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010 Johannes Weißl
+# Copyright (C) 2010-2017 Johannes Weißl
 # License GPLv3+:
 # GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
 # This is free software: you are free to change and redistribute it.
@@ -18,7 +18,7 @@ setup(name = 'muttlearn',
       url = 'https://github.com/weisslj/muttlearn',
       packages = ['muttlearn'],
       scripts = ['bin/muttlearn'],
-      license = 'GNU GPL v3',
+      license='GPLv3+',
       classifiers = [
           'Development Status :: 4 - Beta',
           'Environment :: Console',
